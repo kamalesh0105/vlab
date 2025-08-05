@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "dockerode": "^4.0.7",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
   }
 }
