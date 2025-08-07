@@ -11,6 +11,7 @@ client/.env
 client/.DS_Store
 
 # Server (Express)
+server/letsencrypt
 server/node_modules/
 server/.env
 server/.DS_Store

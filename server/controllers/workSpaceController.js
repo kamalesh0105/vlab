@@ -1,52 +1,58 @@
-const dockerode=require("dockerode");
-const docker = new dockerode({ socketPath: '/var/run/docker.sock' });
+const Docker = require("dockerode");
+const docker = new Docker();
+const crypto = require('crypto');
 
-const deployWorkspace=async(req,res)=>{
-    // const {username}=req.body;
-    const username="root";
-    const passsword="password";
-    try{
-    //image definition
-    const workspace = await docker.createContainer({
+const deployWorkspace = async (req, res) => {
+  const username = "kamalesh11"; // Ideally from req.body
+  const password = crypto.randomBytes(8).toString('hex');
+  console.log(password) //have to store for next session
+  const subdomain = `${username}.xemplar.live`;
+
+  try {
+    const container = await docker.createContainer({
       Image: 'codercom/code-server:4.102.2-39',
-      name:'code-server-userAdmin',
-      ExposedPorts:{
-        '8080/tcp':{},
+      name: `code-server-${username}`,
+      Env: [
+        `PASSWORD=${password}`
+      ],
+      ExposedPorts: {
+        '8080/tcp': {}
+      },
+      Labels: {
+        "traefik.enable": "true",
+        [`traefik.http.routers.${username}.rule`]: `Host(\`${subdomain}\`)`,
+        [`traefik.http.routers.${username}.entrypoints`]: "websecure",
+        [`traefik.http.routers.${username}.tls.certresolver`]: "myresolver",
+        [`traefik.http.services.${username}.loadbalancer.server.port`]: "8080"
       },
       HostConfig: {
-        PortBindings: {
-          '8080/tcp': [{ HostPort: '9000' }] // Expose container's 8080 to host 9000
-        },
-        AutoRemove:true,
-        Memory: 512 * 1024 * 1024, // 512MB memory limit
-        MemorySwap: 1024 * 1024 * 1024, // 1GB swap
-        CpuShares: 512, // CPU limit
-      },
-      Env:[
-     `PASSWORD=${password}`,
-      `USER=${username}`, 
-      ]
+        AutoRemove: true,
+        NetworkMode: "web", // must match docker-compose
+        Memory: 512 * 1024 * 1024,
+        CpuShares: 512,
+      }
     });
 
-    //start conatiner
-    await workspace.start();
+    await container.start();
+
     res.status(200).json({
-       success:true,
-       data:{
-        password:"Rootuser"
-       }
-    })
-    
-    }catch(e){
-      console.log("Error deploying container.."+e);
-      res.status(500).json({
-       success:false,
-      msg:e.message,
-     });
-    }
+      success: true,
+      data: {
+        username,
+        password,
+        url: `https://${subdomain}`
+      }
+    });
 
-}
+  } catch (err) {
+    console.error("Error deploying container:", err);
+    res.status(500).json({
+      success: false,
+      msg: err.message
+    });
+  }
+};
 
-module.exports= {
-    deployWorkspace
+module.exports = {
+  deployWorkspace
 };
