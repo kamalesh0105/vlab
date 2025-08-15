@@ -1,0 +1,6 @@
+//mvp
+sudo docker network create web ->create network for subdomain routing
+sudo docker compose up -d (stop nginx before starting the traefic service)
+sudo npx nodemon index.js ->start backend server
+
+//db
