@@ -3,7 +3,7 @@ const docker = new Docker();
 const crypto = require('crypto');
 
 const deployWorkspace = async (req, res) => {
-  const username = "kamalesh11"; // Ideally from req.body
+  const { username } = req.body;
   const password = crypto.randomBytes(8).toString('hex');
   console.log(password) //have to store for next session
   const subdomain = `${username}.xemplar.live`;
