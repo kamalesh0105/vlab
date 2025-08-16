@@ -13,11 +13,15 @@ import { useState } from "react";
 import supabase from "../lib/Supabase";
 import { useNavigate } from "react-router-dom"
 
+//auth context
+import { useAuth } from "../context/AuthContext";
+
 export function LoginForm({
   className,
   ...props
 }) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [sucess, setSuccess] = useState(false);
@@ -43,6 +47,8 @@ export function LoginForm({
     if (error) setErr(error.message);
     else {
       setSuccess(true);
+      login(data);
+      console.log("success");
       navigate("/dashboard");
     }
   }
