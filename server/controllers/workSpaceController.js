@@ -1,6 +1,7 @@
 const Docker = require("dockerode");
 const docker = new Docker();
 const crypto = require('crypto');
+const prisma = require('../lib/prisma')
 
 const deployWorkspace = async (req, res) => {
   const { username } = req.body;
@@ -32,8 +33,17 @@ const deployWorkspace = async (req, res) => {
         CpuShares: 512,
       }
     });
+    const containerID = container.id;
+    const user = await prisma.user.update({
+      where: { username: username },
+      data: {
+        code_server_password: password,
+        container_id: containerID,
+      }
+    })
 
     await container.start();
+
 
     res.status(200).json({
       success: true,
@@ -53,6 +63,22 @@ const deployWorkspace = async (req, res) => {
   }
 };
 
+const stopWorkSpace = async (req, res) => {
+  const { workspaceID } = req.body;
+  if (!workspaceID) {
+    res.status(500).json({
+      success: false,
+      msg: "workspaceID Missing"
+    })
+  }
+  try {
+
+  } catch (err) {
+
+  }
+
+}
+
 module.exports = {
-  deployWorkspace
+  deployWorkspace, stopWorkSpace
 };

@@ -4,7 +4,7 @@ import { AppSidebar } from "../../components/app-sidebar";
 
 export default function DashboardLayout() {
     return (
-        <div className="flex">
+        <div className="flex h-screen">
             <SidebarProvider >
                 <AppSidebar />
                 <main className="flex-1">

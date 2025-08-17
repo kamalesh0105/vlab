@@ -22,9 +22,9 @@ export const AuthProvider = ({ children }) => {
     }, []);
     const login = (session) => {
         setUser(session.user);
-        setToken(session.access_token);
+        setToken(session.session.access_token);
         localStorage.setItem("user", JSON.stringify(session.user));
-        localStorage.setItem("token", session.access_token);
+        localStorage.setItem("token", session.session.access_token);
     }
 
     const logout = () => {
