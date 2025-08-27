@@ -2,6 +2,7 @@ const Docker = require("dockerode");
 const docker = new Docker();
 const crypto = require('crypto');
 const prisma = require('../lib/prisma')
+const workSpaceService = require("../service/workspace/workSpaceService")
 
 const deployWorkspace = async (req, res) => {
   const { username } = req.body;
@@ -27,7 +28,7 @@ const deployWorkspace = async (req, res) => {
         [`traefik.http.services.${username}.loadbalancer.server.port`]: "8080"
       },
       HostConfig: {
-        AutoRemove: true,
+        AutoRemove: false,
         NetworkMode: "web", // must match docker-compose
         Memory: 512 * 1024 * 1024,
         CpuShares: 512,
@@ -62,6 +63,28 @@ const deployWorkspace = async (req, res) => {
     });
   }
 };
+const reDeploy = async (req, res) => {
+  const { workspaceID } = req.body;
+  if (!workspaceID) {
+    res.status(500).json({
+      success: false,
+      msg: "workspaceID Missing"
+    })
+  }
+  try {
+    workSpaceService.restart(workspaceID);
+    res.status(200).json({
+      success: true,
+      msg: "Container redeplyed successfully"
+    })
+  } catch (err) {
+    console.error("Error Redeploying:", err);
+    res.status(500).json({
+      success: false,
+      msg: err.message
+    });
+  }
+}
 
 const stopWorkSpace = async (req, res) => {
   const { workspaceID } = req.body;
@@ -72,13 +95,44 @@ const stopWorkSpace = async (req, res) => {
     })
   }
   try {
-
+    workSpaceService.stopContainer(workspaceID);
+    res.status(200).json({
+      success: true,
+      msg: "Container stoppepd successfully"
+    })
   } catch (err) {
-
+    console.error("Error Stopping container:", err);
+    res.status(500).json({
+      success: false,
+      msg: err.message
+    });
   }
 
 }
 
+const startWorkSpace = async (req, res) => {
+  const { workspaceID } = req.body;
+  if (!workspaceID) {
+    res.status(500).json({
+      success: false,
+      msg: "workspaceID Missing"
+    })
+  }
+  try {
+    workSpaceService.startContainer(workspaceID);
+    res.status(200).json({
+      success: true,
+      msg: "Container started successfully"
+    })
+  } catch (err) {
+    console.error("Error Starting container:", err);
+    res.status(500).json({
+      success: false,
+      msg: err.message
+    });
+  }
+
+}
 module.exports = {
-  deployWorkspace, stopWorkSpace
+  deployWorkspace, stopWorkSpace, reDeploy, startWorkSpace
 };
