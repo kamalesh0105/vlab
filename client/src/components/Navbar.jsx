@@ -70,7 +70,7 @@ function NavigationMenuBar() {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <Link to="/docs">About</Link>
+                        <Link to="/about">About</Link>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
 
