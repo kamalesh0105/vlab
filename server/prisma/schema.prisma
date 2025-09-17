@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user {
+  id                   BigInt   @default(autoincrement())
+  name                 String   @default("")
+  username             String   @unique(map: "vlabs_username_key")
+  email                String   @unique(map: "vlabs_email_key")
+  code_server_password String?
+  container_id         String?
+  created_at           DateTime @default(now()) @db.Timestamp(6)
+
+  @@id([id, created_at], map: "vlabs_pkey")
+}
