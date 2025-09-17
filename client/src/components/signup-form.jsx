@@ -59,8 +59,11 @@ export function SignupForm({
         e.preventDefault();
         setLoading(true);
         setErr(null);
+        const path = import.meta.env.VITE_REDIRECT_PATH || "/auth/callback";
+        const redirectTo = new URL(path, window.location.origin).toString();
         let { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google'
+            provider: 'google',
+            options: { redirectTo }
         })
 
 

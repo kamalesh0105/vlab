@@ -1,6 +1,7 @@
 import * as React from "react"
 import { CircleCheckIcon, CircleHelpIcon, CircleIcon } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 
 import {
     NavigationMenu,
@@ -51,6 +52,14 @@ const components = [
 ]
 
 function NavigationMenuBar() {
+    const { user, logout, loading } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+    };
+
     return (
         <NavigationMenu viewport={false}>
             <NavigationMenuList>
@@ -64,11 +73,28 @@ function NavigationMenuBar() {
                         <Link to="/docs">About</Link>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <Link to="/login">Signin</Link>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
+
+                {loading ? null : user ? (
+                    <>
+                        <NavigationMenuItem>
+                            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                                <Link to="/dashboard">Dashboard</Link>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                        <NavigationMenuItem>
+                            <button className={navigationMenuTriggerStyle()} onClick={handleLogout}>
+                                Logout
+                            </button>
+                        </NavigationMenuItem>
+                    </>
+                ) : (
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <Link to="/login">Signin</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                )}
+
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
                         <a className="border border-b-gray-500 rounded-xl" href="https://github.com/kamalesh0105/vlab" target="_blank" rel="noopener noreferrer">
