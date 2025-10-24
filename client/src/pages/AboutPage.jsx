@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 const images = [
-    { src: "/vlabs.png", alt: "Vlabs logo" },
-    { src: "/logoVlabs.jpg", alt: "Landing preview" },
-    { src: "/vite.svg", alt: "Tech stack" },
+    { src: "/home.png", alt: "Landing preview" },
+    { src: "/db.png", alt: "Dashboard" },
+    { src: "/webIDE.png", alt: "web VSCODE" },
 ];
 
 export default function AboutPage() {
