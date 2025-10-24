@@ -1,15 +1,20 @@
 const jwt = require("jsonwebtoken");
 
-const verifyAuth = (req, res) => {
+const verifyAuth = (req, res, next) => {
     try {
+        // Prefer Authorization header; fall back to token query param (for SSE/EventSource)
         const authHeader = req.headers["authorization"];
-        if (!authHeader) {
+        let token = null;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            token = authHeader.split(" ")[1];
+        } else if (typeof req.query.token === "string" && req.query.token.length > 0) {
+            token = req.query.token;
+        }
+
+        if (!token) {
             return res.status(401).json({ error: "No token provided" });
         }
-        const token = authHeader.split(" ")[1];
-        if (!token) {
-            return res.status(401).json({ error: "Invalid token format" });
-        }
+
         const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
         req.user = decoded;
         next();

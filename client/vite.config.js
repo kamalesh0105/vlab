@@ -8,5 +8,16 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: ['xemplar.live'],
+    proxy: {
+      // Forward frontend dev requests to the backend server when running locally
+      '/workspace': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/user': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
   }
 })

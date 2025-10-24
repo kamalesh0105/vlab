@@ -12,6 +12,7 @@ import { Label } from "./ui/label"
 import { useState } from "react";
 import supabase from "../lib/Supabase";
 import { useNavigate } from "react-router-dom"
+const apiBase = import.meta.env.VITE_API_BASE_URL || "/workspace";
 
 export function SignupForm({
     className,
@@ -48,6 +49,15 @@ export function SignupForm({
         setLoading(false);
         if (error) setErr(error.message);
         else {
+            // Create user row in backend
+            try {
+                await fetch(`/user`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email })
+                });
+            } catch { /* do not block UI */ }
+
             setSuccess(true);
             setTimeout(() => {
                 navigate("/dashboard");
@@ -59,14 +69,12 @@ export function SignupForm({
         e.preventDefault();
         setLoading(true);
         setErr(null);
-        const path = import.meta.env.VITE_REDIRECT_PATH || "/auth/callback";
+        const path = "/auth/callback"; // implicit flow redirects back with tokens in hash
         const redirectTo = new URL(path, window.location.origin).toString();
         let { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo }
+            options: { redirectTo, flowType: 'implicit' }
         })
-
-
 
     }
 

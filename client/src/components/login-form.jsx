@@ -57,11 +57,11 @@ export function LoginForm({
     e.preventDefault();
     setLoading(true);
     setErr(null);
-    const path = import.meta.env.VITE_REDIRECT_PATH || "/auth/callback";
+    const path = "/auth/callback"; // implicit flow redirects back with tokens in hash
     const redirectTo = new URL(path, window.location.origin).toString();
     let { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo }
+      options: { redirectTo, flowType: 'implicit' }
     })
   }
   return (

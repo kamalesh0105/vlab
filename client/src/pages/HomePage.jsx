@@ -9,7 +9,8 @@ const HomePage = () => {
             <div className="text-center">
                 <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight">Move beyond your IDE</h1>
                 <p className="mt-6 text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                    Your mission control for software projects and software engineering agents. Keep momentum on any device with sandboxed dev environments in our cloud or your VPC.
+                    Access your cloud-powered VS Code workspace anytime, anywhere.
+                    Work seamlessly on projects, collaborate with peers, and code in secure sandboxed environments — all from your browser.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-4">
                     {loading ? null : user ? (

@@ -18,31 +18,56 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (!token) return;
-        // Prime current status once
-        fetch(`${apiBase}/status`, { headers: authHeaders })
-            .then(r => r.json())
-            .then(d => {
-                if (d?.success) {
-                    setStatus(d.status);
-                    setInfo({ username: d.username || "", url: d.url || "", container_id: d.container_id || null, password: null });
-                }
-            }).catch(() => { });
+        let cancelled = false;
+        let failureCount = 0;
+        // Start with a 10s warm-up before the first call, then revert to 7s cadence
+        let nextDelayMs = 10000;
+        let timer = null;
 
-        // Subscribe via SSE
-        const es = new EventSource(`${apiBase}/stream`, { withCredentials: false });
-        es.onmessage = (evt) => {
-            try {
-                const payload = JSON.parse(evt.data);
-                if (payload?.status) setStatus(payload.status);
-                if (payload?.container_id) setInfo(prev => ({ ...prev, container_id: payload.container_id }));
-            } catch { }
+        const schedule = (ms) => {
+            if (cancelled) return;
+            clearTimeout(timer);
+            timer = setTimeout(pullStatus, ms);
         };
-        es.onerror = () => { /* keep silent */ };
-        return () => es.close();
-    }, [token, authHeaders]);
+
+        const pullStatus = async () => {
+            if (cancelled) return;
+            try {
+                const r = await fetch(`${apiBase}/status`, { headers: authHeaders });
+                if (r.status === 401) {
+                    // auth issue: stop polling until token/context changes
+                    return;
+                }
+                const d = await r.json().catch(() => ({}));
+                if (!cancelled && d?.success) {
+                    failureCount = 0;
+                    nextDelayMs = 7000;
+                    setStatus(d.status);
+                    setInfo({ username: d.username || "", url: d.url || "", container_id: d.container_id || null, password: d.password || null });
+                }
+            } catch {
+                // ignore network blips
+            } finally {
+                if (!cancelled) {
+                    // Exponential backoff on consecutive failures (cap at 60s)
+                    if (status === "unknown" || status === "absent") {
+                        failureCount += 1;
+                        nextDelayMs = Math.min(60000, 7000 * Math.pow(2, Math.max(0, failureCount - 1)));
+                    } else {
+                        failureCount = 0;
+                        nextDelayMs = 7000;
+                    }
+                    schedule(nextDelayMs);
+                }
+            }
+        };
+
+        // Do not call immediately; wait for warm-up window first
+        schedule(nextDelayMs);
+        return () => { cancelled = true; clearTimeout(timer); };
+    }, [token, authHeaders, status]);
 
     const canDeploy = status === "absent" || status === "exited";
-    const canStart = status === "exited";
     const canStop = status === "running";
     const canRedeploy = status === "running" || status === "exited";
 
@@ -53,16 +78,10 @@ const Dashboard = () => {
             const res = await fetch(`${apiBase}`, { method: "POST", headers: authHeaders, body: JSON.stringify({ username }) });
             const d = await res.json();
             if (d?.success) {
-                setInfo(prev => ({ ...prev, username: d.data.username, url: d.data.url }));
+                setInfo(prev => ({ ...prev, username: d.data.username, url: d.data.url, password: d.data?.password ?? prev.password }));
+                // Refresh status shortly after deploy kicks off
+                setTimeout(() => { fetch(`${apiBase}/status`, { headers: authHeaders }).then(r => r.json()).then(s => s?.success && setStatus(s.status)).catch(() => { }); }, 1500);
             }
-        } finally { setBusy(false); }
-    };
-
-    const start = async () => {
-        if (!info.container_id) return;
-        setBusy(true);
-        try {
-            await fetch(`${apiBase}/start`, { method: "POST", headers: authHeaders, body: JSON.stringify({ workspaceID: info.container_id }) });
         } finally { setBusy(false); }
     };
 
@@ -71,6 +90,7 @@ const Dashboard = () => {
         setBusy(true);
         try {
             await fetch(`${apiBase}`, { method: "DELETE", headers: authHeaders, body: JSON.stringify({ workspaceID: info.container_id }) });
+            setTimeout(() => { fetch(`${apiBase}/status`, { headers: authHeaders }).then(r => r.json()).then(s => s?.success && setStatus(s.status)).catch(() => { }); }, 1000);
         } finally { setBusy(false); }
     };
 
@@ -79,6 +99,7 @@ const Dashboard = () => {
         setBusy(true);
         try {
             await fetch(`${apiBase}/redeploy`, { method: "POST", headers: authHeaders, body: JSON.stringify({ workspaceID: info.container_id }) });
+            setTimeout(() => { fetch(`${apiBase}/status`, { headers: authHeaders }).then(r => r.json()).then(s => s?.success && setStatus(s.status)).catch(() => { }); }, 1500);
         } finally { setBusy(false); }
     };
 
@@ -95,7 +116,6 @@ const Dashboard = () => {
                         Redeploy
                     </Button>
                     <Button variant="destructive" onClick={stop} disabled={!canStop || busy}>Stop</Button>
-                    <Button variant="secondary" onClick={start} disabled={!canStart || busy}>Start</Button>
                 </div>
             </div>
 
@@ -113,13 +133,17 @@ const Dashboard = () => {
                         </div>
                         <div>
                             <p className="text-sm text-slate-400">Server URL</p>
-                            <p className="font-mono text-blue-400 underline">
-                                {info.url || "-"}
-                            </p>
+                            {info.url ? (
+                                <a className="font-mono text-blue-400 underline" href={info.url} target="_blank" rel="noreferrer">
+                                    {info.url}
+                                </a>
+                            ) : (
+                                <p className="font-mono text-slate-400">-</p>
+                            )}
                         </div>
                         <div>
                             <p className="text-sm text-slate-400">Server Password</p>
-                            <p className="font-mono">********</p>
+                            <p className="font-mono">{info.password || "-"}</p>
                         </div>
                     </CardContent>
                 </Card>

@@ -21,7 +21,7 @@ const App = () => {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
-        <Route path="/auth/callback" element={<PublicRoute><AuthCallback /></PublicRoute>} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
           <Route path="settings" element={<Settings />} />
